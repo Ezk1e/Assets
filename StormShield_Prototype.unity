@@ -243,9 +243,10 @@ GameObject:
   - component: {fileID: 40188816}
   - component: {fileID: 40188815}
   - component: {fileID: 40188814}
+  - component: {fileID: 40188818}
   m_Layer: 0
   m_Name: Point A
-  m_TagString: Untagged
+  m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -338,6 +339,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &40188818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 40188813}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6785e2eea60ebe849997fefb404983ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stationObject: {fileID: 2688999131341135100, guid: cdfc4e890cf9fa84d975022de66242aa, type: 3}
+  characterLocation: {fileID: 22565478}
 --- !u!1 &56073428
 GameObject:
   m_ObjectHideFlags: 0
@@ -363,7 +378,7 @@ Transform:
   m_GameObject: {fileID: 56073428}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.5}
+  m_LocalPosition: {x: 0, y: 0, z: -0.65}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -804,7 +819,7 @@ MonoBehaviour:
   knockbackForce: 0
   knockbackTime: 0
   rotateSpeed: 10
-  interactObject: {fileID: 56073428}
+  interactPivot: {fileID: 56073428}
   boxSize: {x: 1, y: 2, z: 2}
   maxDistance: 1
 --- !u!136 &1611298678

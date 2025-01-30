@@ -1,19 +1,19 @@
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerScript : MonoBehaviour
 {
     CharacterController characterController;
     [SerializeField] GameObject playerObject;
     [SerializeField] float walkSpeed, gravity, knockbackForce, knockbackTime, rotateSpeed;
     float knockbackCounter;
-    Vector3 moveDirection;
-    Vector3 origPos;
+    Vector3 moveDirection, origPos;
     bool isHit = false;
 
-    [SerializeField] GameObject interactObject;
-    Transform characterTransform;
-    [SerializeField] Vector3 boxSize = new Vector3(1, 1, 1);
+    [SerializeField] GameObject interactPivot;
+    Transform interactHitbox;
+    [SerializeField] Vector3 boxSize;
     [SerializeField] float maxDistance = 1;
+    bool isInteracting = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -26,9 +26,36 @@ public class PlayerMovement : MonoBehaviour
 
         origPos = transform.position;
 
-        characterTransform = interactObject.GetComponent<Transform>();
+        interactHitbox = interactPivot.GetComponent<Transform>();
+        boxSize = new Vector3(1, 2, 2);
+        maxDistance = 1;
     }
     // Update is called once per frame
+    void Update()
+    {
+        #region Interact
+        RaycastHit hit;
+        if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
+        {
+            if(hit.collider.tag == "Interactable")
+            {
+                hit.collider.GetComponent<MeshRenderer>().material.color =
+                new Color(Random.Range(0.0f, 1.0f),
+                Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+            
+                if(Input.GetKeyDown(KeyCode.E))
+                {
+                    isInteracting = true;
+                }
+            }
+            else
+            {
+                isInteracting = false;
+            }
+        }
+        #endregion
+    }
+
     void FixedUpdate()
     {
         #region Movement
@@ -36,12 +63,10 @@ public class PlayerMovement : MonoBehaviour
         {
             isHit = false;
             
-            
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
 
-            float speedX;
-            float speedY;
+            float speedX, speedY;
 
             speedX = walkSpeed * Input.GetAxis("Vertical");
             speedY = walkSpeed * Input.GetAxis("Horizontal");
@@ -70,8 +95,18 @@ public class PlayerMovement : MonoBehaviour
             playerObject.transform.rotation = Quaternion.Slerp(playerObject.transform.rotation, newRotation, Time.deltaTime * rotateSpeed);
         }
         #endregion
+    }
 
-        Debug.Log(characterTransform.lossyScale);
+    public void knockbackPlayer(Vector3 direction)
+    {
+        isHit = true;
+        knockbackCounter = knockbackTime;
+        moveDirection = direction * knockbackForce;
+    }
+
+    public bool isInteractingWithObject()
+    {
+        return isInteracting;
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
@@ -84,35 +119,24 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public void knockbackPlayer(Vector3 direction)
-    {
-        isHit = true;
-        knockbackCounter = knockbackTime;
-        moveDirection = direction * knockbackForce;
-    }
-
     private void OnDrawGizmos()
     {
-        if(characterTransform == null)
+        if(interactHitbox == null)
         {
             return;
         }
         
         RaycastHit hit;
-        if(Physics.BoxCast(characterTransform.position, boxSize/2, characterTransform.forward, out hit, characterTransform.rotation, maxDistance))
-        {
-            hit.collider.GetComponent<MeshRenderer>().material.color =
-                new Color(Random.Range(0.0f, 1.0f),
-                Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            
+        if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
+        {           
             Gizmos.color = Color.red;
-            Gizmos.DrawRay(characterTransform.position, characterTransform.forward * hit.distance);
-            Gizmos.DrawWireCube(characterTransform.position + characterTransform.forward * hit.distance, boxSize);
+            Gizmos.DrawRay(interactHitbox.position, interactHitbox.forward * hit.distance);
+            Gizmos.DrawWireCube(interactHitbox.position + interactHitbox.forward * hit.distance, boxSize);
         }
         else
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawRay(characterTransform.position, characterTransform.forward * maxDistance);
+            Gizmos.DrawRay(interactHitbox.position, interactHitbox.forward * maxDistance);
         }
     }
 }
