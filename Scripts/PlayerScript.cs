@@ -13,7 +13,11 @@ public class PlayerScript : MonoBehaviour
     Transform interactHitbox;
     [SerializeField] Vector3 boxSize;
     [SerializeField] float maxDistance = 1;
-    bool isInteracting = false;
+    bool isInteractingStation = false;
+
+    [SerializeField] Transform itemLocation;
+    GameObject hasItem;
+    Rigidbody hasItemRigid;
     // Start is called before the first frame update
     void Start()
     {
@@ -34,23 +38,46 @@ public class PlayerScript : MonoBehaviour
     void Update()
     {
         #region Interact
-        RaycastHit hit;
-        if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
+        if(Input.GetKeyDown(KeyCode.E))
         {
-            if(hit.collider.tag == "Interactable")
+            if(hasItem == null)
             {
-                hit.collider.GetComponent<MeshRenderer>().material.color =
-                new Color(Random.Range(0.0f, 1.0f),
-                Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            
-                if(Input.GetKeyDown(KeyCode.E))
+                RaycastHit hit;
+                if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
                 {
-                    isInteracting = true;
+                    if(hit.collider.tag == "Interactable")
+                    {
+                        isInteractingStation = true;
+                    }
+
+                    if(hit.collider.tag == "Tool")
+                    {
+                        pickItem(hit.collider.gameObject);
+                    }
                 }
             }
-            else
+        }
+        else
+        {
+            isInteractingStation = false;
+        }
+
+        if(Input.GetKeyDown(KeyCode.Q))
+        {
+            if(hasItem != null)
             {
-                isInteracting = false;
+                dropItem();
+            }
+        }
+        
+        RaycastHit hit2;
+        if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit2, interactHitbox.rotation, maxDistance))
+        {
+            if(hit2.collider.tag == "Interactable")
+            {
+                hit2.collider.GetComponent<MeshRenderer>().material.color =
+                    new Color(Random.Range(0.0f, 1.0f),
+                    Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             }
         }
         #endregion
@@ -96,18 +123,38 @@ public class PlayerScript : MonoBehaviour
         }
         #endregion
     }
-
-    public void knockbackPlayer(Vector3 direction)
+    private void pickItem(GameObject item)
     {
-        isHit = true;
-        knockbackCounter = knockbackTime;
-        moveDirection = direction * knockbackForce;
+        hasItem = item;
+        hasItemRigid = item.GetComponent<Rigidbody>();
+        hasItemRigid.isKinematic = true;
+        hasItemRigid.transform.parent = itemLocation;
+        hasItemRigid.transform.position = itemLocation.position;
     }
 
-    public bool isInteractingWithObject()
+    private void dropItem()
     {
-        return isInteracting;
+        hasItemRigid.isKinematic = false;
+        hasItemRigid.transform.parent = null;
+        hasItem = null;
     }
+
+    public void spawnTool(GameObject item)
+    {
+        if(isInteractingStation)
+        {
+            hasItem = Instantiate(item, itemLocation.position, itemLocation.rotation, itemLocation);
+            hasItemRigid = hasItem.GetComponent<Rigidbody>();
+            hasItemRigid.isKinematic = true;
+        }
+    }
+
+    // public void knockbackPlayer(Vector3 direction)
+    // {
+    //     isHit = true;
+    //     knockbackCounter = knockbackTime;
+    //     moveDirection = direction * knockbackForce;
+    // }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
