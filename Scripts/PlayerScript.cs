@@ -2,30 +2,38 @@ using UnityEngine;
 
 public class PlayerScript : MonoBehaviour
 {
+    #region Character Variables
     CharacterController characterController;
-    [SerializeField] GameObject playerObject;
-    [SerializeField] float walkSpeed, gravity, knockbackForce, knockbackTime, rotateSpeed;
+    [SerializeField] GameObject avatarObject;
+    [SerializeField] float walkSpeed, gravity, rotateSpeed; // knockbackForce, knockbackTime
     float knockbackCounter;
     Vector3 moveDirection, origPos;
-    bool isHit = false;
+    // bool isHit = false;
+    #endregion
 
+    #region Interact Variables
     [SerializeField] GameObject interactPivot;
     Transform interactHitbox;
     [SerializeField] Vector3 boxSize;
     [SerializeField] float maxDistance = 1;
     bool isInteractingStation = false;
+    bool isInteractingPointB = false;
+    #endregion
 
+    #region Item Variables
     [SerializeField] Transform itemLocation;
     GameObject hasItem;
     Rigidbody hasItemRigid;
+    #endregion
+
     // Start is called before the first frame update
     void Start()
     {
         characterController = GetComponent<CharacterController>();
         walkSpeed = 6f;
         gravity = 1f;
-        knockbackForce = 10f;
-        knockbackTime = .25f;
+        // knockbackForce = 10f;
+        // knockbackTime = .25f;
         rotateSpeed = 10f;
 
         origPos = transform.position;
@@ -33,6 +41,8 @@ public class PlayerScript : MonoBehaviour
         interactHitbox = interactPivot.GetComponent<Transform>();
         boxSize = new Vector3(1, 2, 2);
         maxDistance = 1;
+
+        hasItem = null;
     }
     // Update is called once per frame
     void Update()
@@ -56,6 +66,8 @@ public class PlayerScript : MonoBehaviour
                     }
                 }
             }
+
+            isInteractingPointB = FindAnyObjectByType<PointBScript>().doGen(this.gameObject, avatarObject);
         }
         else
         {
@@ -69,18 +81,12 @@ public class PlayerScript : MonoBehaviour
                 dropItem();
             }
         }
-        
-        RaycastHit hit2;
-        if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit2, interactHitbox.rotation, maxDistance))
-        {
-            if(hit2.collider.tag == "Interactable")
-            {
-                hit2.collider.GetComponent<MeshRenderer>().material.color =
-                    new Color(Random.Range(0.0f, 1.0f),
-                    Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            }
-        }
         #endregion
+
+        if(Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.S))
+        {
+            isInteractingPointB = false;
+        }
     }
 
     void FixedUpdate()
@@ -88,15 +94,13 @@ public class PlayerScript : MonoBehaviour
         #region Movement
         if(knockbackCounter <= 0)
         {
-            isHit = false;
+            // isHit = false;
             
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
 
-            float speedX, speedY;
-
-            speedX = walkSpeed * Input.GetAxis("Vertical");
-            speedY = walkSpeed * Input.GetAxis("Horizontal");
+            float speedX = walkSpeed * Input.GetAxis("Vertical");
+            float speedY = walkSpeed * Input.GetAxis("Horizontal");
                 
             float movementDirectionY = moveDirection.y;
             moveDirection = (forward * speedX) + (right * speedY);
@@ -106,23 +110,35 @@ public class PlayerScript : MonoBehaviour
             {
                 moveDirection.y -= gravity;
             }
+            else
+            {
+                gravity = 1f;
+            }
             
         }
         else
         {
             knockbackCounter -= Time.deltaTime;
         }
-        characterController.Move(moveDirection * Time.deltaTime);
+
+        if(!isInteractingPointB)
+        {
+            characterController.Move(moveDirection * Time.deltaTime);
+        }
         #endregion
 
         #region Character Rotation
         if(Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0)
         {
-            Quaternion newRotation = Quaternion.LookRotation(new Vector3(moveDirection.x, 0f, moveDirection.z));
-            playerObject.transform.rotation = Quaternion.Slerp(playerObject.transform.rotation, newRotation, Time.deltaTime * rotateSpeed);
+            if(!isInteractingPointB)
+            {
+                Quaternion newRotation = Quaternion.LookRotation(new Vector3(moveDirection.x, 0f, moveDirection.z));
+                avatarObject.transform.rotation = Quaternion.Slerp(avatarObject.transform.rotation, newRotation, Time.deltaTime * rotateSpeed);
+            }
         }
         #endregion
     }
+
     private void pickItem(GameObject item)
     {
         hasItem = item;
@@ -147,6 +163,11 @@ public class PlayerScript : MonoBehaviour
             hasItemRigid = hasItem.GetComponent<Rigidbody>();
             hasItemRigid.isKinematic = true;
         }
+    }
+
+    public GameObject getItemHolding()
+    {
+        return hasItem;
     }
 
     // public void knockbackPlayer(Vector3 direction)
