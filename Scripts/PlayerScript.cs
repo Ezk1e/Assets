@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerScript : MonoBehaviour
@@ -5,16 +7,25 @@ public class PlayerScript : MonoBehaviour
     #region Character Variables
     CharacterController characterController;
     [SerializeField] GameObject avatarObject;
-    [SerializeField] float walkSpeed, gravity, rotateSpeed; // knockbackForce, knockbackTime
-    float knockbackCounter;
+    [SerializeField] float walkSpeed = 6f;
+    [SerializeField] float gravity = 1f;
+    [SerializeField] float rotateSpeed = 10f; 
     Vector3 moveDirection, origPos;
+    StaminaScript stamina;
+    [SerializeField] float dashSpeed = 10f;
+    [SerializeField] float dashDuration = 1f;
+    [SerializeField] float dashCooldown = 1f;
+    bool isDashing = false;
+    bool isDashCooldown = false;
+    // knockbackForce, knockbackTime
+    float knockbackCounter;
     // bool isHit = false;
     #endregion
 
     #region Interact Variables
-    [SerializeField] GameObject interactPivot;
     Transform interactHitbox;
-    [SerializeField] Vector3 boxSize;
+    [SerializeField] GameObject interactPivot;
+    [SerializeField] Vector3 boxSize = new Vector3(1, 2, 2);
     [SerializeField] float maxDistance = 1;
     bool isInteractingStation = false;
     bool isInteractingPointB = false;
@@ -30,23 +41,24 @@ public class PlayerScript : MonoBehaviour
     void Start()
     {
         characterController = GetComponent<CharacterController>();
-        walkSpeed = 6f;
-        gravity = 1f;
+        stamina = GetComponent<StaminaScript>();
         // knockbackForce = 10f;
         // knockbackTime = .25f;
-        rotateSpeed = 10f;
 
         origPos = transform.position;
-
         interactHitbox = interactPivot.GetComponent<Transform>();
-        boxSize = new Vector3(1, 2, 2);
-        maxDistance = 1;
 
         hasItem = null;
     }
+
     // Update is called once per frame
     void Update()
     {
+        if(isDashing)
+        {
+            return;
+        }
+
         #region Interact
         if(Input.GetKeyDown(KeyCode.E))
         {
@@ -87,10 +99,20 @@ public class PlayerScript : MonoBehaviour
         {
             isInteractingPointB = false;
         }
+
+        if(Input.GetKeyDown(KeyCode.F) && !isDashCooldown)
+        {
+            StartCoroutine(Dash());
+        }
     }
 
     void FixedUpdate()
     {
+        if(isDashing)
+        {
+            return;
+        }
+
         #region Movement
         if(knockbackCounter <= 0)
         {
@@ -100,10 +122,17 @@ public class PlayerScript : MonoBehaviour
             Vector3 right = transform.TransformDirection(Vector3.right);
 
             float speedX = walkSpeed * Input.GetAxis("Vertical");
-            float speedY = walkSpeed * Input.GetAxis("Horizontal");
+            float speedZ = walkSpeed * Input.GetAxis("Horizontal");
                 
             float movementDirectionY = moveDirection.y;
-            moveDirection = (forward * speedX) + (right * speedY);
+            moveDirection = (forward * speedX) + (right * speedZ);
+
+            if (moveDirection.magnitude > 1)
+            {
+                moveDirection.Normalize();
+                moveDirection *= walkSpeed;
+            }
+            
             moveDirection.y = movementDirectionY;
 
             if (!characterController.isGrounded)
@@ -137,6 +166,29 @@ public class PlayerScript : MonoBehaviour
             }
         }
         #endregion
+    }
+
+    private IEnumerator Dash()
+    {
+        if(stamina.ConsumeStamina(1))
+        {
+            isDashCooldown = true;
+            isDashing = true;
+            stamina.isDashing = true;
+            float startTime = Time.time;
+
+            while (Time.time < startTime + dashDuration)
+            {
+                characterController.Move(moveDirection * dashSpeed * Time.deltaTime);
+                yield return null;
+            }
+
+            isDashing = false;
+            stamina.isDashing = false;
+
+            yield return new WaitForSeconds(dashCooldown);
+            isDashCooldown = false;
+        }
     }
 
     private void pickItem(GameObject item)
@@ -208,4 +260,3 @@ public class PlayerScript : MonoBehaviour
         }
     }
 }
-
