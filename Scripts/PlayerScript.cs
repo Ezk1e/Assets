@@ -7,6 +7,7 @@ public class PlayerScript : MonoBehaviour
     #region Character Variables
     CharacterController characterController;
     [SerializeField] GameObject avatarObject;
+    [SerializeField] Transform cameraPivot;
     [SerializeField] float walkSpeed = 6f;
     [SerializeField] float gravity = 1f;
     [SerializeField] float rotateSpeed = 10f; 
@@ -120,19 +121,10 @@ public class PlayerScript : MonoBehaviour
             
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
-
-            float speedX = walkSpeed * Input.GetAxis("Vertical");
-            float speedZ = walkSpeed * Input.GetAxis("Horizontal");
                 
-            float movementDirectionY = moveDirection.y;
-            moveDirection = (forward * speedX) + (right * speedZ);
+            moveDirection = (forward * Input.GetAxisRaw("Vertical")) + (right * Input.GetAxisRaw("Horizontal"));
 
-            // if (moveDirection.magnitude > 1)
-            // {
-            //     moveDirection.Normalize();
-            //     moveDirection *= walkSpeed;
-            // }
-            
+            float movementDirectionY = moveDirection.y;
             moveDirection.y = movementDirectionY;
 
             if (!characterController.isGrounded)
@@ -152,15 +144,16 @@ public class PlayerScript : MonoBehaviour
 
         if(!isInteractingPointB)
         {
-            characterController.Move(moveDirection * Time.deltaTime);
+            characterController.Move(moveDirection.normalized * walkSpeed * Time.deltaTime);
         }
         #endregion
 
         #region Character Rotation
-        if(Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0)
+        if(Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0)
         {
             if(!isInteractingPointB)
             {
+                transform.rotation = Quaternion.Euler(0, cameraPivot.rotation.eulerAngles.y, 0);
                 Quaternion newRotation = Quaternion.LookRotation(new Vector3(moveDirection.x, 0f, moveDirection.z));
                 avatarObject.transform.rotation = Quaternion.Slerp(avatarObject.transform.rotation, newRotation, Time.deltaTime * rotateSpeed);
             }
@@ -176,10 +169,11 @@ public class PlayerScript : MonoBehaviour
             isDashing = true;
             stamina.isDashing = true;
             float startTime = Time.time;
+            Vector3 dashDirection = moveDirection.normalized * dashSpeed;
 
             while (Time.time < startTime + dashDuration)
             {
-                characterController.Move(moveDirection * dashSpeed * Time.deltaTime);
+                characterController.Move(dashDirection * Time.deltaTime);
                 yield return null;
             }
 

@@ -32,8 +32,6 @@ public class StaminaScript : MonoBehaviour
                 staminaBar[i].enabled = false;
             }
         }
-
-        Debug.Log(isDashing);
     }
 
     public bool ConsumeStamina(int amount)
