@@ -9,6 +9,7 @@ public class StaminaScript : MonoBehaviour
     [SerializeField] int currentStamina;
     [SerializeField] float staminaRegenRate = 2f;
     [SerializeField] Image[] staminaBar;
+    [SerializeField] CanvasGroup group; // To Edit
     public bool isDashing = false;
     // Start is called before the first frame update
     void Start()

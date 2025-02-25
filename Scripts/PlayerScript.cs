@@ -127,11 +127,11 @@ public class PlayerScript : MonoBehaviour
             float movementDirectionY = moveDirection.y;
             moveDirection = (forward * speedX) + (right * speedZ);
 
-            if (moveDirection.magnitude > 1)
-            {
-                moveDirection.Normalize();
-                moveDirection *= walkSpeed;
-            }
+            // if (moveDirection.magnitude > 1)
+            // {
+            //     moveDirection.Normalize();
+            //     moveDirection *= walkSpeed;
+            // }
             
             moveDirection.y = movementDirectionY;
 
