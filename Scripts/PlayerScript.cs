@@ -29,7 +29,7 @@ public class PlayerScript : MonoBehaviour
     [SerializeField] Vector3 boxSize = new Vector3(1, 2, 2);
     [SerializeField] float maxDistance = 1;
     bool isInteractingStation = false;
-    bool isInteractingPointB = false;
+    public static bool isInteractingPointB = false;
     #endregion
 
     #region Item Variables
@@ -105,6 +105,8 @@ public class PlayerScript : MonoBehaviour
         {
             StartCoroutine(Dash());
         }
+
+        FindAnyObjectByType<PointBScript>().SkillCheckControl();
     }
 
     void FixedUpdate()
