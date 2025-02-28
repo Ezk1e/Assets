@@ -10,7 +10,7 @@ public class Player2Script : MonoBehaviour
     [SerializeField] Transform cameraPivot;
     [SerializeField] public float walkSpeed = 6f;
     [SerializeField] float gravity = 1f;
-    [SerializeField] float rotateSpeed = 10f; 
+    [SerializeField] float rotateSpeed = 10f;
     Vector3 moveDirection, origPos;
     StaminaScript stamina;
     [SerializeField] float dashSpeed = 10f;
@@ -18,9 +18,7 @@ public class Player2Script : MonoBehaviour
     [SerializeField] float dashCooldown = 1f;
     bool isDashing = false;
     bool isDashCooldown = false;
-    // knockbackForce, knockbackTime
     float knockbackCounter;
-    // bool isHit = false;
     #endregion
 
     #region Interact Variables
@@ -28,8 +26,9 @@ public class Player2Script : MonoBehaviour
     [SerializeField] GameObject interactPivot;
     [SerializeField] Vector3 boxSize = new Vector3(1, 2, 2);
     [SerializeField] float maxDistance = 1;
-    bool isInteractingStation = false;
     public static bool isInteractingPointB = false;
+    StationScript currentStation;
+    PointBScript currentActivity;
     #endregion
 
     #region Item Variables
@@ -38,92 +37,109 @@ public class Player2Script : MonoBehaviour
     Rigidbody hasItemRigid;
     #endregion
 
-    // Start is called before the first frame update
     void Start()
     {
         characterController = GetComponent<CharacterController>();
         stamina = GetComponent<StaminaScript>();
-        // knockbackForce = 10f;
-        // knockbackTime = .25f;
-
         origPos = transform.position;
         interactHitbox = interactPivot.GetComponent<Transform>();
-
         hasItem = null;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if(isDashing)
+        if (isDashing)
         {
             return;
         }
 
         #region Interact
-        if(Input.GetKeyDown(KeyCode.Alpha0))
+        if (Input.GetKeyDown(KeyCode.Alpha0))
         {
-            if(hasItem == null)
+            if (hasItem == null)
             {
                 RaycastHit hit;
-                if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
+                if (Physics.BoxCast(interactHitbox.position, boxSize / 2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
                 {
-                    if(hit.collider.tag == "Interactable")
+                    if (hit.collider.tag == "Interactable")
                     {
-                        isInteractingStation = true;
+                        if (currentStation != null)
+                        {
+                            hasItem = currentStation.spawnTool(itemLocation);
+                            if (hasItem != null)
+                            {
+                                hasItemRigid = hasItem.GetComponent<Rigidbody>();
+                            }
+                        }
                     }
 
-                    if(hit.collider.tag == "Tool")
+                    switch (hit.collider.tag)
                     {
-                        pickItem(hit.collider.gameObject);
+                        case "Tool1":
+                            pickItem(hit.collider.gameObject);
+                            break;
+                        case "Tool2":
+                            pickItem(hit.collider.gameObject);
+                            break;
+                        case "Tool3":
+                            pickItem(hit.collider.gameObject);
+                            break;
                     }
                 }
             }
 
-            isInteractingPointB = FindAnyObjectByType<PointBScript>().doGen(this.gameObject, avatarObject);
-        }
-        else
-        {
-            isInteractingStation = false;
+            if (currentActivity != null)
+            {
+                isInteractingPointB = currentActivity.doGen(this.gameObject, avatarObject);
+            }
         }
 
-        if(Input.GetKeyDown(KeyCode.Alpha9))
+        if (Input.GetKeyDown(KeyCode.Alpha9))
         {
-            if(hasItem != null)
+            if (hasItem != null)
             {
                 dropItem();
             }
         }
         #endregion
 
-        if(Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
+        if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
         {
             isInteractingPointB = false;
         }
 
-        if(Input.GetKeyDown(KeyCode.Alpha8) && !isDashCooldown)
+        if (Input.GetKeyDown(KeyCode.Alpha8) && !isDashCooldown)
         {
             StartCoroutine(Dash());
         }
 
-        FindAnyObjectByType<PointBScript>().SkillCheckControl(KeyCode.P);
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            if (currentActivity != null)
+            {
+                currentActivity.SkillCheckControl(KeyCode.P);
+            }
+        }
+
+        if (currentActivity != null)
+        {
+            currentActivity.SkillCheckProgress(isInteractingPointB);
+        }
     }
 
     void FixedUpdate()
     {
-        if(isDashing)
+        if (isDashing)
         {
             return;
         }
 
         #region Movement
-        if(knockbackCounter <= 0)
+        if (knockbackCounter <= 0)
         {
-            // isHit = false;
-            
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
-                
+
             moveDirection = (forward * Input.GetAxisRaw("Vertical2")) + (right * Input.GetAxisRaw("Horizontal2"));
         }
         else
@@ -131,7 +147,7 @@ public class Player2Script : MonoBehaviour
             knockbackCounter -= Time.deltaTime;
         }
 
-        if(!isInteractingPointB)
+        if (!isInteractingPointB)
         {
             characterController.Move(moveDirection.normalized * walkSpeed * Time.deltaTime);
             characterController.Move(new Vector3(0, -gravity, 0));
@@ -139,9 +155,9 @@ public class Player2Script : MonoBehaviour
         #endregion
 
         #region Character Rotation
-        if(Input.GetAxisRaw("Horizontal2") != 0 || Input.GetAxisRaw("Vertical2") != 0)
+        if (Input.GetAxisRaw("Horizontal2") != 0 || Input.GetAxisRaw("Vertical2") != 0)
         {
-            if(!isInteractingPointB)
+            if (!isInteractingPointB)
             {
                 transform.rotation = Quaternion.Euler(0, cameraPivot.rotation.eulerAngles.y, 0);
                 Quaternion newRotation = Quaternion.LookRotation(new Vector3(moveDirection.x, 0f, moveDirection.z));
@@ -153,7 +169,7 @@ public class Player2Script : MonoBehaviour
 
     private IEnumerator Dash()
     {
-        if(stamina.ConsumeStamina(1))
+        if (stamina.ConsumeStamina(1))
         {
             isDashCooldown = true;
             isDashing = true;
@@ -191,53 +207,52 @@ public class Player2Script : MonoBehaviour
         hasItem = null;
     }
 
-    public void spawnTool(GameObject item)
-    {
-        if(isInteractingStation)
-        {
-            hasItem = Instantiate(item, itemLocation.position, itemLocation.rotation, itemLocation);
-            hasItemRigid = hasItem.GetComponent<Rigidbody>();
-            hasItemRigid.isKinematic = true;
-        }
-    }
-
     public GameObject getItemHolding()
     {
         return hasItem;
     }
-
-    // public void knockbackPlayer(Vector3 direction)
-    // {
-    //     isHit = true;
-    //     knockbackCounter = knockbackTime;
-    //     moveDirection = direction * knockbackForce;
-    // }
 
     public void setSpawnPoint(Vector3 spawnPoint)
     {
         origPos = spawnPoint;
     }
 
+    public void SetCurrentStation(StationScript station)
+    {
+        currentStation = station;
+    }
+
+    public void SetCurrentActivity(PointBScript activity)
+    {
+        currentActivity = activity;
+    }
+
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         if (hit.collider.name == "DeathPlane")
         {
-            Vector3 spawnPosition = origPos;
-            spawnPosition.y = origPos.y + 2;
-            transform.position = spawnPosition;
+            StartCoroutine(respawnTimer());
         }
+    }
+
+    private IEnumerator respawnTimer()
+    {
+        yield return new WaitForSeconds(3);
+        Vector3 spawnPosition = origPos;
+        spawnPosition.y = origPos.y + 2;
+        transform.position = spawnPosition;
     }
 
     private void OnDrawGizmos()
     {
-        if(interactHitbox == null)
+        if (interactHitbox == null)
         {
             return;
         }
-        
+
         RaycastHit hit;
-        if(Physics.BoxCast(interactHitbox.position, boxSize/2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
-        {           
+        if (Physics.BoxCast(interactHitbox.position, boxSize / 2, interactHitbox.forward, out hit, interactHitbox.rotation, maxDistance))
+        {
             Gizmos.color = Color.red;
             Gizmos.DrawRay(interactHitbox.position, interactHitbox.forward * hit.distance);
             Gizmos.DrawWireCube(interactHitbox.position + interactHitbox.forward * hit.distance, boxSize);
