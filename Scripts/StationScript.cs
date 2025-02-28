@@ -5,9 +5,36 @@ using UnityEngine;
 public class StationScript : MonoBehaviour
 {
     [SerializeField] GameObject stationObject;
-    // Update is called once per frame
-    void Update()
+    void OnTriggerEnter(Collider other)
     {
-        FindAnyObjectByType<PlayerScript>().spawnTool(stationObject);
+        if (other.gameObject.tag == "User")
+        {
+            PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
+            if (player != null)
+            {
+                player.SetCurrentStation(this);
+            }
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.tag == "User")
+        {
+            PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
+            if (player != null)
+            {
+                player.SetCurrentStation(null);
+            }
+        }
+    }
+
+    public GameObject spawnTool(Transform itemLocation)
+    {
+        GameObject item = Instantiate(stationObject, itemLocation.transform.position, itemLocation.transform.rotation, itemLocation.transform);
+        Rigidbody hasItemRigid = item.GetComponent<Rigidbody>();
+        hasItemRigid.isKinematic = true;
+
+        return item;
     }
 }

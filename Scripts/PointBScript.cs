@@ -44,35 +44,6 @@ public class PointBScript : MonoBehaviour
         }
 
         playerItem = player.getItemHolding();
-
-        if (PlayerScript.isInteractingPointB)
-        {
-            skillCheckTimer += Time.deltaTime;
-
-            if (skillCheckTimer >= skillCheckInterval)
-            {
-                skillCheckTimer = 0;
-                StartSkillCheck();
-            }
-
-            if(skillCheckSuccess)
-            {
-                activityCounter = activityCounter + (.2f * activityTime);
-
-                ResetSkillCheck();
-            }
-
-            activityCounter += Time.deltaTime;
-            if(activityCounter >= activityTime)
-            {
-                activityDone = true;
-                PlayerScript.isInteractingPointB = false;
-                MeshRenderer activityMesh = GetComponent<MeshRenderer>();
-                activityMesh.material.color = Color.green;
-            }
-
-            Debug.Log("Activity Counter: " + activityCounter);
-        }
     }
 
     void FixedUpdate()
@@ -96,14 +67,21 @@ public class PointBScript : MonoBehaviour
             return;
         }
 
-        if(playerItem != null)
+        if (other.gameObject.tag == "User")
         {
-            if(other.tag == "User")
+            PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
+            if (player != null)
             {
-                if(stationObject.tag == playerItem.tag)
-                {
-                    isInteract = true;
-                }
+                player.SetCurrentActivity(this);
+            }
+        }
+
+        playerItem = player.getItemHolding();
+        if (playerItem != null && other.tag == "User")
+        {
+            if (stationObject.tag == playerItem.tag)
+            {
+                isInteract = true;
             }
         }
 
@@ -122,6 +100,15 @@ public class PointBScript : MonoBehaviour
         {
             return;
         }
+
+        if (other.gameObject.tag == "User")
+        {
+            PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
+            if (player != null)
+            {
+                player.SetCurrentActivity(null);
+            }
+        }
         
         if (other.tag == "User")
         {
@@ -131,13 +118,11 @@ public class PointBScript : MonoBehaviour
 
     public bool doGen(GameObject playerObject, GameObject avatarObject)
     {
-        if(isInteract && !activityDone)
+        playerItem = player.getItemHolding();
+        if (isInteract && !activityDone)
         {
             itemInserted = true;
-            if(playerItem != null)
-            {
-                Destroy(playerItem);
-            }
+            Destroy(playerItem);
             MovePlayerToInteractionPoint(playerObject, avatarObject);
 
             return true;
@@ -170,6 +155,37 @@ public class PointBScript : MonoBehaviour
     #endregion
 
     #region Skill Check Functions
+    public void SkillCheckProgress(bool isInteract)
+    {
+        if (isInteract)
+        {
+            skillCheckTimer += Time.deltaTime;
+
+            if (skillCheckTimer >= skillCheckInterval)
+            {
+                skillCheckTimer = 0;
+                StartSkillCheck();
+            }
+
+            if(skillCheckSuccess)
+            {
+                activityCounter = activityCounter + (.2f * activityTime);
+
+                ResetSkillCheck();
+            }
+
+            activityCounter += Time.deltaTime;
+            if(activityCounter >= activityTime)
+            {
+                activityDone = true;
+                PlayerScript.isInteractingPointB = false;
+                MeshRenderer activityMesh = GetComponent<MeshRenderer>();
+                activityMesh.material.color = Color.green;
+            }
+
+            Debug.Log("Activity Counter: " + activityCounter);
+        }
+    }
     public void StartSkillCheck()
     {
         skillCheckSuccess = false;
@@ -214,11 +230,11 @@ public class PointBScript : MonoBehaviour
         return skillCheckSuccess;
     }
 
-    public void SkillCheckControl()
+    public void SkillCheckControl(KeyCode key)
     {
         if (skillCheckActive)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(key))
             {
                 CheckSuccess();
             }

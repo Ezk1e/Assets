@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 3548433146463138525}
   - component: {fileID: 9156357252386930507}
   m_Layer: 0
-  m_Name: Tool
-  m_TagString: Tool1
+  m_Name: Tool 2
+  m_TagString: Tool3
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 2688999131341135100}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.3918386, y: 0.25, z: -6.7700377}
+  m_LocalPosition: {x: 1.1450598, y: 0.25, z: -7.6833215}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -63,7 +63,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 763b4f95167ea434cbaec984f658a84a, type: 2}
+  - {fileID: 2100000, guid: c2f276c3757951144b0eee905513b2d8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

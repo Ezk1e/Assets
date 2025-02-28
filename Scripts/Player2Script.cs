@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerScript : MonoBehaviour
+public class Player2Script : MonoBehaviour
 {
     #region Character Variables
     CharacterController characterController;
@@ -10,7 +10,7 @@ public class PlayerScript : MonoBehaviour
     [SerializeField] Transform cameraPivot;
     [SerializeField] public float walkSpeed = 6f;
     [SerializeField] float gravity = 1f;
-    [SerializeField] float rotateSpeed = 10f;
+    [SerializeField] float rotateSpeed = 10f; 
     Vector3 moveDirection, origPos;
     StaminaScript stamina;
     [SerializeField] float dashSpeed = 10f;
@@ -28,9 +28,8 @@ public class PlayerScript : MonoBehaviour
     [SerializeField] GameObject interactPivot;
     [SerializeField] Vector3 boxSize = new Vector3(1, 2, 2);
     [SerializeField] float maxDistance = 1;
+    bool isInteractingStation = false;
     public static bool isInteractingPointB = false;
-    StationScript currentStation;
-    PointBScript currentActivity;
     #endregion
 
     #region Item Variables
@@ -62,7 +61,7 @@ public class PlayerScript : MonoBehaviour
         }
 
         #region Interact
-        if(Input.GetKeyDown(KeyCode.E))
+        if(Input.GetKeyDown(KeyCode.Alpha0))
         {
             if(hasItem == null)
             {
@@ -71,38 +70,24 @@ public class PlayerScript : MonoBehaviour
                 {
                     if(hit.collider.tag == "Interactable")
                     {
-                        if(currentStation != null)
-                        {
-                            hasItem = currentStation.spawnTool(itemLocation);
-                            if(hasItem != null)
-                            {
-                                hasItemRigid = hasItem.GetComponent<Rigidbody>();
-                            }
-                        }
+                        isInteractingStation = true;
                     }
 
-                    switch(hit.collider.tag)
+                    if(hit.collider.tag == "Tool")
                     {
-                        case "Tool1":
-                            pickItem(hit.collider.gameObject);
-                            break;
-                        case "Tool2":
-                            pickItem(hit.collider.gameObject);
-                            break;
-                        case "Tool3":
-                            pickItem(hit.collider.gameObject);
-                            break;
+                        pickItem(hit.collider.gameObject);
                     }
                 }
             }
 
-            if(currentActivity != null)
-            {
-                isInteractingPointB = currentActivity.doGen(this.gameObject, avatarObject);
-            }
+            isInteractingPointB = FindAnyObjectByType<PointBScript>().doGen(this.gameObject, avatarObject);
+        }
+        else
+        {
+            isInteractingStation = false;
         }
 
-        if(Input.GetKeyDown(KeyCode.Q))
+        if(Input.GetKeyDown(KeyCode.Alpha9))
         {
             if(hasItem != null)
             {
@@ -111,28 +96,17 @@ public class PlayerScript : MonoBehaviour
         }
         #endregion
 
-        if(Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.S))
+        if(Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
         {
             isInteractingPointB = false;
         }
 
-        if(Input.GetKeyDown(KeyCode.F) && !isDashCooldown)
+        if(Input.GetKeyDown(KeyCode.Alpha8) && !isDashCooldown)
         {
             StartCoroutine(Dash());
         }
 
-        if(Input.GetKeyDown(KeyCode.Space))
-        {
-            if(currentActivity != null)
-            {
-                currentActivity.SkillCheckControl(KeyCode.Space);
-            }
-        }
-
-        if(currentActivity != null)
-        {
-            currentActivity.SkillCheckProgress(isInteractingPointB);
-        }
+        FindAnyObjectByType<PointBScript>().SkillCheckControl(KeyCode.P);
     }
 
     void FixedUpdate()
@@ -150,7 +124,7 @@ public class PlayerScript : MonoBehaviour
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
                 
-            moveDirection = (forward * Input.GetAxisRaw("Vertical")) + (right * Input.GetAxisRaw("Horizontal"));
+            moveDirection = (forward * Input.GetAxisRaw("Vertical2")) + (right * Input.GetAxisRaw("Horizontal2"));
         }
         else
         {
@@ -165,7 +139,7 @@ public class PlayerScript : MonoBehaviour
         #endregion
 
         #region Character Rotation
-        if(Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0)
+        if(Input.GetAxisRaw("Horizontal2") != 0 || Input.GetAxisRaw("Vertical2") != 0)
         {
             if(!isInteractingPointB)
             {
@@ -217,6 +191,16 @@ public class PlayerScript : MonoBehaviour
         hasItem = null;
     }
 
+    public void spawnTool(GameObject item)
+    {
+        if(isInteractingStation)
+        {
+            hasItem = Instantiate(item, itemLocation.position, itemLocation.rotation, itemLocation);
+            hasItemRigid = hasItem.GetComponent<Rigidbody>();
+            hasItemRigid.isKinematic = true;
+        }
+    }
+
     public GameObject getItemHolding()
     {
         return hasItem;
@@ -228,36 +212,20 @@ public class PlayerScript : MonoBehaviour
     //     knockbackCounter = knockbackTime;
     //     moveDirection = direction * knockbackForce;
     // }
-    
+
     public void setSpawnPoint(Vector3 spawnPoint)
     {
         origPos = spawnPoint;
     }
 
-    public void SetCurrentStation(StationScript station)
-    {
-        currentStation = station;
-    }
-
-    public void SetCurrentActivity(PointBScript activity)
-    {
-        currentActivity = activity;
-    }
-
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        if(hit.collider.name == "DeathPlane")
+        if (hit.collider.name == "DeathPlane")
         {
-            StartCoroutine(respawnTimer());
+            Vector3 spawnPosition = origPos;
+            spawnPosition.y = origPos.y + 2;
+            transform.position = spawnPosition;
         }
-    }
-
-    private IEnumerator respawnTimer()
-    {
-        yield return new WaitForSeconds(3);
-        Vector3 spawnPosition = origPos;
-        spawnPosition.y = origPos.y + 2;
-        transform.position = spawnPosition;
     }
 
     private void OnDrawGizmos()
