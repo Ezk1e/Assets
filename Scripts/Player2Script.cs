@@ -90,7 +90,7 @@ public class Player2Script : MonoBehaviour
 
             if (currentActivity != null)
             {
-                isInteractingPointB = currentActivity.doGen(this.gameObject, avatarObject);
+                isInteractingPointB = currentActivity.doGen2(this.gameObject, avatarObject);
             }
         }
 

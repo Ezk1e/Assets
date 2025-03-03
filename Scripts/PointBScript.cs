@@ -10,7 +10,9 @@ public class PointBScript : MonoBehaviour
     [SerializeField] float activityTime = 5;
     float activityCounter = 0;
     PlayerScript player;
+    Player2Script player2;
     GameObject playerItem;
+    GameObject playerItem2;
     bool isInteract = false;
     bool itemInserted = false;
     bool activityDone = false;
@@ -30,6 +32,7 @@ public class PointBScript : MonoBehaviour
     void Start()
     {
         player = FindObjectOfType<PlayerScript>();
+        player2 = FindObjectOfType<Player2Script>();
         pointerTransform = pointerImage.GetComponent<RectTransform>();
         targetPosition = pointB.position;
         pointerTransform.position = pointA.position;
@@ -44,6 +47,7 @@ public class PointBScript : MonoBehaviour
         }
 
         playerItem = player.getItemHolding();
+        playerItem2 = player2.getItemHolding();
     }
 
     void FixedUpdate()
@@ -69,17 +73,30 @@ public class PointBScript : MonoBehaviour
 
         if (other.gameObject.tag == "User")
         {
-            PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
             if (player != null)
             {
                 player.SetCurrentActivity(this);
             }
+            if (player2 != null)
+            {
+                player2.SetCurrentActivity(this);
+            }
         }
 
         playerItem = player.getItemHolding();
+        playerItem2 = player2.getItemHolding();
+        
         if (playerItem != null && other.tag == "User")
         {
             if (stationObject.tag == playerItem.tag)
+            {
+                isInteract = true;
+            }
+        }
+
+        if (playerItem2 != null && other.tag == "User")
+        {
+            if (stationObject.tag == playerItem2.tag)
             {
                 isInteract = true;
             }
@@ -103,10 +120,14 @@ public class PointBScript : MonoBehaviour
 
         if (other.gameObject.tag == "User")
         {
-            PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
             if (player != null)
             {
                 player.SetCurrentActivity(null);
+            }
+
+            if (player2 != null)
+            {
+                player2.SetCurrentActivity(null);
             }
         }
         
@@ -123,6 +144,21 @@ public class PointBScript : MonoBehaviour
         {
             itemInserted = true;
             Destroy(playerItem);
+            MovePlayerToInteractionPoint(playerObject, avatarObject);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool doGen2(GameObject playerObject, GameObject avatarObject)
+    {
+        playerItem2 = player2.getItemHolding();
+        if (isInteract && !activityDone)
+        {
+            itemInserted = true;
+            Destroy(playerItem2);
             MovePlayerToInteractionPoint(playerObject, avatarObject);
 
             return true;
@@ -179,6 +215,7 @@ public class PointBScript : MonoBehaviour
             {
                 activityDone = true;
                 PlayerScript.isInteractingPointB = false;
+                Player2Script.isInteractingPointB = false;
                 MeshRenderer activityMesh = GetComponent<MeshRenderer>();
                 activityMesh.material.color = Color.green;
             }

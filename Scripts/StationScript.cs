@@ -10,9 +10,14 @@ public class StationScript : MonoBehaviour
         if (other.gameObject.tag == "User")
         {
             PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
+            Player2Script player2 = other.gameObject.GetComponent<Player2Script>();
             if (player != null)
             {
                 player.SetCurrentStation(this);
+            }
+            if (player2 != null)
+            {
+                player2.SetCurrentStation(this);
             }
         }
     }
@@ -22,9 +27,14 @@ public class StationScript : MonoBehaviour
         if (other.gameObject.tag == "User")
         {
             PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
+            Player2Script player2 = other.gameObject.GetComponent<Player2Script>();
             if (player != null)
             {
                 player.SetCurrentStation(null);
+            }
+            if (player2 != null)
+            {
+                player2.SetCurrentStation(null);
             }
         }
     }
